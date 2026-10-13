@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Профиль{% endblock %}
+{% block pretitle %}<span class="text-ink">личный кабинет</span>{% endblock %}
+{% block page_title %}<span class="text-sky">Профиль</span>{% endblock %}
+
+{% block content %}
+<div class="row row-cards">
+    <div class="col-12 col-lg-7">
+        <div class="swatch swatch-sky hero-swatch h-100">
+            <div class="text-center my-auto py-4">
+                <div class="swatch-label mb-2">добро пожаловать</div>
+                <div class="swatch-big">{{ user.username }}</div>
+                <div class="mt-3">
+                    {% if is_methodist %}роль: методист{% else %}роль: пользователь{% endif %}
+                </div>
+            </div>
+
+            <div class="swatch-corners">
+                <a href="/courses/" class="swatch-pill">Открыть курсы</a>
+                <span class="swatch-label text-end d-none d-sm-inline">
+                    {% if is_methodist %}можно добавлять, изменять<br>и удалять учебные данные
+                    {% else %}доступен просмотр<br>учебных данных{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="row row-cards h-100">
+            <div class="col-12 col-md-4 col-lg-12">
+                <a href="/departments/" class="swatch swatch-ice h-100">
+                    <span class="swatch-label">факультеты</span>
+                    <div class="swatch-num mt-auto pt-3">{{ departments_count }}</div>
+                </a>
+            </div>
+            <div class="col-12 col-md-4 col-lg-12">
+                <a href="/groups/" class="swatch swatch-cloud h-100">
+                    <span class="swatch-label">учебные группы</span>
+                    <div class="swatch-num mt-auto pt-3">{{ groups_count }}</div>
+                </a>
+            </div>
+            <div class="col-12 col-md-4 col-lg-12">
+                <a href="/courses/" class="swatch swatch-charcoal h-100">
+                    <span class="swatch-label">курсы</span>
+                    <div class="swatch-num mt-auto pt-3">{{ courses_count }}</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards mt-0">
+    <div class="col-12 col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Курсы по факультетам</h3>
+            </div>
+            <div class="card-body">
+                <div id="chart-courses"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Учебные группы по факультетам</h3>
+            </div>
+            <div class="card-body">
+                <div id="chart-groups"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'core/dist/libs/apexcharts/dist/apexcharts.min.js' %}"></script>
+{{ chart_data|json_script:"chart-data" }}
+<script>
+    const data = JSON.parse(document.getElementById('chart-data').textContent);
+
+    new ApexCharts(document.getElementById('chart-courses'), {
+        chart: {type: 'donut', height: 300, animations: {enabled: false}},
+        series: data.courses,
+        labels: data.labels,
+        colors: ['#7eb5d6', '#e8e8e8', '#2b2b2b'],
+        stroke: {width: 0},
+        states: {hover: {filter: {type: 'none'}}},
+        tooltip: {enabled: false},
+        dataLabels: {
+            formatter: function (value, options) {
+                return data.courses[options.seriesIndex];
+            },
+            style: {colors: ['#2b2b2b']},
+            dropShadow: {enabled: false}
+        },
+        legend: {position: 'bottom', labels: {colors: 'var(--tblr-body-color)'}},
+        plotOptions: {pie: {donut: {labels: {
+            show: true,
+            total: {show: true, showAlways: true, label: 'всего курсов', color: 'var(--tblr-body-color)'},
+            value: {color: 'var(--tblr-body-color)'}
+        }}}}
+    }).render();
+
+    new ApexCharts(document.getElementById('chart-groups'), {
+        chart: {type: 'bar', height: 300, toolbar: {show: false}},
+        series: [{name: 'Учебных групп', data: data.groups}],
+        xaxis: {
+            categories: data.labels,
+            stepSize: 1,
+            labels: {
+                formatter: function (value) { return Math.round(value); },
+                style: {colors: 'var(--tblr-body-color)'}
+            }
+        },
+        yaxis: {labels: {maxWidth: 160, style: {colors: 'var(--tblr-body-color)'}}},
+        colors: ['#7eb5d6'],
+        plotOptions: {bar: {horizontal: true, borderRadius: 8, barHeight: '45%'}}
+    }).render();
+</script>
+{% endblock %}
